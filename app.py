@@ -83,7 +83,8 @@ def card(f, primary=False):
     st.markdown(f'<div class="card" style="--c:{c}"><h3>{bi("star-fill") if primary else bi(SEV_ICON[f["sev"]])}{f["name"]}</h3>'
                 f'<span class="badge">{SEV[f["sev"]]}</span><span class="badge" style="--c:#475569">{bi(ACT_ICON.get(f["atype"], "tools"))}{f["atype"]}</span>'
                 f'<span class="badge" style="--c:#475569">Cost: {f["cost"]}</span><div class="bar"><div style="width:{min(f["cf"], 1)*100:.0f}%"></div></div>'
-                f'<small style="color:#64748b">Confidence {f["cf"]:.0%}</small><p>{bi("tools")}{f["action"]}</p></div>', unsafe_allow_html=True)
+                f'<small style="color:#64748b">Confidence {f["cf"]:.0%}</small><p>{bi("tools")}{f["action"]}</p>'
+                f'<p style="font-size:.88rem;color:#475569">{bi("info-circle")}<b>Why this action:</b> {f["why_action"]}</p></div>', unsafe_allow_html=True)
 
 def p_consult():
     title("chat-square-text", "Consultation", "Describe the problem, answer a few expert questions, then review the diagnosis.")
@@ -161,6 +162,8 @@ def p_explain():
         with c2:
             st.markdown(f'<div class="sec">{bi("diagram-3")}HOW was it derived?</div>', unsafe_allow_html=True)
             st.code("\n".join(how(pick, trace)), language=None)
+        st.markdown(f'<div class="sec">{bi("wrench-adjustable")}WHY is this action appropriate?</div>', unsafe_allow_html=True)
+        st.info(next(f["why_action"] for f in faults if f["id"] == pick), icon=":material/build:")
     st.markdown(f'<div class="sec">{bi("slash-circle")}WHY NOT…?</div>', unsafe_allow_html=True)
     ask = st.selectbox("Check another fault", sorted({r.concl for r in RULES if r.concl.startswith("fault:")}), format_func=label)
     st.write("It *was* diagnosed (see the Diagnosis page)." if ask in wm else why_not(ask, RULES, wm))

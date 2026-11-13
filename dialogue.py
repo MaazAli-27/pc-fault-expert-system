@@ -168,7 +168,7 @@ def next_question(known, asked, focus=()):
     if len(asked) >= MAX_Q:
         return None
     wm, _ = run(RULES, known)                      # only what we really know
-    areas = list(dict.fromkeys([FIELD[k][0] for k, v in known.items() if k in FIELD and v is not False and k != 'slow']
+    areas = list(dict.fromkeys([FIELD[k][0] for k, v in known.items() if k in FIELD and v not in (False, None) and k != 'slow']
                                + list(focus)))
     if not areas:                                   # nothing specific yet: screening questions first
         hint = ([] + (["bsod", "freezes", "random_shutdown", "boot_loop"] if known.get("_crash") else [])

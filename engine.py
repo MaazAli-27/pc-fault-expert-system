@@ -14,6 +14,41 @@ SEV = {4: "Critical", 3: "High", 2: "Medium", 1: "Low", 0: "-"}
 # least invasive first (used as tiebreaker)
 INVASIVE = ["Further Test", "Clean", "Update", "Scan", "Repair", "Reinstall", "Upgrade", "Replace"]
 
+# ---- Why is this action appropriate? (rationale used by the cards, the Explanation page and the report)
+ACTION_WHY = {
+    "Replace": "the part itself has failed or worn out, so cleaning, updating or repairing will not bring it back",
+    "Repair": "the cause is a fault or misconfiguration that can be fixed without buying new parts",
+    "Update": "the evidence points to outdated, missing or conflicting drivers/software, which an update or rollback fixes",
+    "Clean": "the cause is dust, clutter or low free space, which cleaning resolves cheaply",
+    "Scan": "the symptoms look like malware or unwanted software, which must be found and removed before anything else",
+    "Reinstall": "system files or an installation are damaged beyond a simple repair, so a fresh install is the reliable fix",
+    "Upgrade": "the hardware works but is too limited for the load, so more capacity is needed rather than a repair",
+    "Further Test": "the evidence is not conclusive yet, so a test is needed before spending money or changing anything",
+}
+SPECIAL_WHY = {  # faults where the generic action text would be misleading
+    "fault:backup_urgent": "the drive is reporting failure and any repair can destroy the remaining data, so a backup must come before everything else",
+    "fault:ransomware": "files are encrypted and the infection can spread, so the PC must be isolated and restored from clean backups, not repaired in place",
+}
+SEV_WHY = {4: "It is critical, so it comes first.", 3: "Severity is high, so it should be fixed soon.",
+           2: "Severity is medium, so it can be scheduled.", 1: "Severity is low, so it is not urgent."}
+COST_WHY = {"Free": "It costs nothing to try.", "Low": "The cost is low.", "Medium": "The cost is moderate.",
+            "High": "The cost is high, so confirm the diagnosis before paying."}
+
+def explain_action(rule, cf):
+    """Plain-language reasons why the recommended action fits this fault."""
+    ev = "; ".join(f"{label(k)} = {'Yes' if v is True else 'No' if v is False else v}" for k, v in rule.conds.items())
+    idx = INVASIVE.index(rule.atype)
+    milder = [a for a in ("Clean", "Update", "Repair") if INVASIVE.index(a) < idx]
+    ladder = (f" Milder options ({', '.join(milder)}) are ranked first, but the matched rules point to a cause they cannot fix."
+              if milder else " This is already one of the least invasive steps.")
+    conf = " Confidence is moderate, so verify with a test before spending money." if cf < 0.6 else ""
+    special = SPECIAL_WHY.get(rule.concl)
+    lead = f"Immediate action is needed because {special}" if special else f"{rule.atype} is recommended because {ACTION_WHY[rule.atype]}"
+    if special:
+        return f"{lead}. Evidence ({rule.id}): {ev}. {SEV_WHY[rule.sev]}"
+    return (f"{lead}. Evidence ({rule.id}): {ev}. "
+            f"{SEV_WHY[rule.sev]} {COST_WHY[rule.cost]}{ladder}{conf}")
+
 def label(k):
     return k.split(":")[-1].replace("_", " ").capitalize()
 
@@ -99,6 +134,7 @@ def decide(wm, trace):
             "cost": best.cost,
             "action": best.action,
             "urgent": best.sev == 4,
+            "why_action": explain_action(best, cf),
         })
     out.sort(key=lambda f: (-f["score"], INVASIVE.index(f["atype"])))
     return out
@@ -141,7 +177,8 @@ def report(faults, trace):
     L = ["COMPUTER FAULT DIAGNOSIS REPORT", "=" * 32]
     for i, f in enumerate(faults, 1):
         L += [f"{i}. {f['name']}  [{SEV[f['sev']]}, confidence {f['cf']:.0%}]",
-              f"   Action ({f['atype']}, cost {f['cost']}): {f['action']}"]
+              f"   Action ({f['atype']}, cost {f['cost']}): {f['action']}",
+              f"   Why this action: {f['why_action']}"]
     L += ["", "RULES FIRED:"]
     for t in trace:
         note = f" [assumed: {', '.join(t['assumed'])}]" if t.get("assumed") else ""

@@ -11,7 +11,7 @@ A symbolic, rule-based PC Fault Diagnosis Expert System built with Python and St
   * **MYCIN-Style Certainty Factors & Open-World Logic:** Distinguishes confirmed symptoms (`True`/`False`), explicit `"Don't know"` responses (`None`), and unasked baseline assumptions (`NORMAL_STATE`) with automatic certainty discounting.
   * **Goal-Driven Dialogue Manager:** Parses natural-language problem descriptions with clause-level negation detection and dynamically selects the highest-information follow-up question.
 * **Diagnosis (`app.py`, `knowledge.py`):**
-  * Covers 95 diagnostic inputs across 10 hardware, OS, network, security, and peripheral domains, identifying specific root-cause faults alongside severity badges (`Critical`, `High`, `Medium`, `Low`), confidence scores, and near-miss candidates.
+  * Covers 95 diagnostic inputs across 9 hardware, OS, network, security, and peripheral domains, identifying specific root-cause faults alongside severity badges (`Critical`, `High`, `Medium`, `Low`), confidence scores, and near-miss candidates.
 * **Decision Support (`engine.py`):**
   * Computes a risk-weighted priority score ($\text{Severity} \times \text{Confidence}$) for every confirmed fault and pairs each diagnosis with actionable repair steps, intervention categories (`Further Test`, `Clean`, `Update`, `Scan`, `Repair`, `Reinstall`, `Upgrade`, `Replace`), and estimated cost tiers (`Free`, `Low`, `Medium`, `High`).
   * Generates a downloadable plain-text diagnostic report containing ranked recommendations and the complete rule execution trace.

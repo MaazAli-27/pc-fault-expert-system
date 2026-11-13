@@ -65,6 +65,19 @@ assert "fault:faulty_nic" not in wm_dk and "fault:router_or_isp_fault" not in wm
 print("PASS negation parsing & open-world 'Don't know' handling")
 
 # --- headless UI test: one full consultation through the Streamlit app
+# --- "why this action" rationale and the 'Don't know' interview fix
+from knowledge import NORMAL_STATE
+from dialogue import next_question
+from engine import report
+for name, s in SAMPLES.items():
+    wm, tr = run(RULES, s, normal_state=NORMAL_STATE)
+    fs = decide(wm, tr)
+    assert all(f["why_action"] and (f["atype"] in f["why_action"] or "Immediate action" in f["why_action"]) for f in fs), name
+    assert "Why this action:" in report(fs, tr), name
+nq = next_question({"no_internet": None}, ["no_internet"], [])
+assert nq is None or "Network" not in nq[1], nq       # a "Don't know" must not select an area
+print("PASS action rationale (cards + report) and Don't-know area fix")
+
 try:
     from streamlit.testing.v1 import AppTest
 except ImportError:
